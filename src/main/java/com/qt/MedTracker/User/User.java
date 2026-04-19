@@ -24,7 +24,7 @@ public class User {
     @JsonIgnore
     private String password;
     @JsonIgnore
-    private String slackWebhookUrl;
+    private String slackMemberId;
     private String role;
 
     @ManyToOne
@@ -110,18 +110,18 @@ public class User {
         this.password = password;
     }
 
-    public String getSlackWebhookUrl() {
-        return slackWebhookUrl;
+    public String getSlackMemberId() {
+        return slackMemberId;
     }
 
-    public void setSlackWebhookUrl(String slackWebhookUrl) {
-        this.slackWebhookUrl = slackWebhookUrl;
+    public void setSlackMemberId(String slackMemberId) {
+        this.slackMemberId = slackMemberId;
     }
 
     @Transient
     @com.fasterxml.jackson.annotation.JsonProperty("slack_connected")
     public boolean isSlackConnected() {
-        return slackWebhookUrl != null && !slackWebhookUrl.isBlank();
+        return slackMemberId != null && !slackMemberId.isBlank();
     }
 
     public String getRole() {

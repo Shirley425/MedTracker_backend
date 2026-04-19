@@ -29,12 +29,17 @@ public class MedicationRecord {
     @JsonProperty("taken_at")
     private LocalDateTime takenAt;
 
-    private String status;
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    private MedicationRecordStatus status;
+
+    @Column(name = "source")
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    private MedicationRecordSource source;
 
     public MedicationRecord() {
     }
 
-    public MedicationRecord(Long userId, Integer medicationId, LocalDateTime takenAt, String status) {
+    public MedicationRecord(Long userId, Integer medicationId, LocalDateTime takenAt, MedicationRecordStatus status) {
         this.userId = userId;
         this.medicationId = medicationId;
         this.takenAt = takenAt;
@@ -73,11 +78,19 @@ public class MedicationRecord {
         this.takenAt = takenAt;
     }
 
-    public String getStatus() {
+    public MedicationRecordStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(MedicationRecordStatus status) {
         this.status = status;
+    }
+
+    public MedicationRecordSource getSource() {
+        return source;
+    }
+
+    public void setSource(MedicationRecordSource source) {
+        this.source = source;
     }
 }

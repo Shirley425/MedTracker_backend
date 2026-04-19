@@ -7,6 +7,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "vital_signs")
@@ -18,43 +22,54 @@ public class VitalSign {
     @Column(name = "user_id")
     @JsonProperty("user_id")
     private Long userId;
-    private String date;
-    private String body_temperature;
-    private String heart_rate;
-    private String blood_pressure;
-    private String blood_sugar;
+    @Column(name = "recorded_on")
+    private LocalDate date;
+    @Column(name = "body_temperature_c")
+    private BigDecimal bodyTemperature;
+    @Column(name = "heart_rate_bpm")
+    private Integer heartRate;
+    @Column(name = "blood_pressure_systolic")
+    private Integer bloodPressureSystolic;
+    @Column(name = "blood_pressure_diastolic")
+    private Integer bloodPressureDiastolic;
+    @Column(name = "blood_sugar_mg_dl")
+    private Integer bloodSugar;
 
     public VitalSign() {
     }
 
     public VitalSign(Integer id,
                      Long user_id,
-                     String date,
-                     String body_temperature,
-                     String heart_rate,
-                     String blood_pressure,
-                     String blood_sugar) {
+                     LocalDate date,
+                     BigDecimal bodyTemperature,
+                     Integer heartRate,
+                     Integer bloodPressureSystolic,
+                     Integer bloodPressureDiastolic,
+                     Integer bloodSugar) {
         this.id = id;
         this.userId = user_id;
         this.date = date;
-        this.body_temperature = body_temperature;
-        this.heart_rate = heart_rate;
-        this.blood_pressure = blood_pressure;
-        this.blood_sugar = blood_sugar;
+        this.bodyTemperature = bodyTemperature;
+        this.heartRate = heartRate;
+        this.bloodPressureSystolic = bloodPressureSystolic;
+        this.bloodPressureDiastolic = bloodPressureDiastolic;
+        this.bloodSugar = bloodSugar;
     }
 
     public VitalSign(Long user_id,
-                     String date,
-                     String body_temperature,
-                     String heart_rate,
-                     String blood_pressure,
-                     String blood_sugar) {
+                     LocalDate date,
+                     BigDecimal bodyTemperature,
+                     Integer heartRate,
+                     Integer bloodPressureSystolic,
+                     Integer bloodPressureDiastolic,
+                     Integer bloodSugar) {
         this.userId = user_id;
         this.date = date;
-        this.body_temperature = body_temperature;
-        this.heart_rate = heart_rate;
-        this.blood_pressure = blood_pressure;
-        this.blood_sugar = blood_sugar;
+        this.bodyTemperature = bodyTemperature;
+        this.heartRate = heartRate;
+        this.bloodPressureSystolic = bloodPressureSystolic;
+        this.bloodPressureDiastolic = bloodPressureDiastolic;
+        this.bloodSugar = bloodSugar;
     }
 
     public Integer getId() {
@@ -73,43 +88,71 @@ public class VitalSign {
         this.userId = user_id;
     }
 
-    public String getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(String date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
-    public String getBody_temperature() {
-        return body_temperature;
+    public BigDecimal getBody_temperature() {
+        return bodyTemperature;
     }
 
-    public void setBody_temperature(String body_temperature) {
-        this.body_temperature = body_temperature;
+    public void setBody_temperature(BigDecimal bodyTemperature) {
+        this.bodyTemperature = bodyTemperature;
     }
 
-    public String getHeart_rate() {
-        return heart_rate;
+    public Integer getHeart_rate() {
+        return heartRate;
     }
 
-    public void setHeart_rate(String heart_rate) {
-        this.heart_rate = heart_rate;
+    public void setHeart_rate(Integer heartRate) {
+        this.heartRate = heartRate;
     }
 
+    @Transient
     public String getBlood_pressure() {
-        return blood_pressure;
+        if (bloodPressureSystolic == null || bloodPressureDiastolic == null) {
+            return null;
+        }
+        return bloodPressureSystolic + "/" + bloodPressureDiastolic;
     }
 
-    public void setBlood_pressure(String blood_pressure) {
-        this.blood_pressure = blood_pressure;
+    public void setBlood_pressure(String bloodPressure) {
+        if (bloodPressure == null || bloodPressure.isBlank()) {
+            this.bloodPressureSystolic = null;
+            this.bloodPressureDiastolic = null;
+            return;
+        }
+
+        String[] parts = bloodPressure.split("/");
+        this.bloodPressureSystolic = parts.length > 0 ? Integer.valueOf(parts[0].trim()) : null;
+        this.bloodPressureDiastolic = parts.length > 1 ? Integer.valueOf(parts[1].trim()) : null;
     }
 
-    public String getBlood_sugar() {
-        return blood_sugar;
+    public Integer getBlood_sugar() {
+        return bloodSugar;
     }
 
-    public void setBlood_sugar(String blood_sugar) {
-        this.blood_sugar = blood_sugar;
+    public void setBlood_sugar(Integer bloodSugar) {
+        this.bloodSugar = bloodSugar;
+    }
+
+    public Integer getBloodPressureSystolic() {
+        return bloodPressureSystolic;
+    }
+
+    public void setBloodPressureSystolic(Integer bloodPressureSystolic) {
+        this.bloodPressureSystolic = bloodPressureSystolic;
+    }
+
+    public Integer getBloodPressureDiastolic() {
+        return bloodPressureDiastolic;
+    }
+
+    public void setBloodPressureDiastolic(Integer bloodPressureDiastolic) {
+        this.bloodPressureDiastolic = bloodPressureDiastolic;
     }
 }

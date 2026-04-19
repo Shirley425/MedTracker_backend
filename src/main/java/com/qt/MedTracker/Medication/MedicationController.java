@@ -1,7 +1,8 @@
 package com.qt.MedTracker.Medication;
 
-import com.qt.MedTracker.SlackAPI.SlackService;
 import com.qt.MedTracker.SlackAPI.SlackNotificationRequest;
+import com.qt.MedTracker.security.SecurityUtils;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,59 +15,89 @@ import java.util.Optional;
 public class MedicationController {
 
     private final MedicationService medicationService;
-    private final SlackService slackService;
 
-    public MedicationController(MedicationService medicationService, SlackService slackService) {
+    public MedicationController(MedicationService medicationService) {
         this.medicationService = medicationService;
-        this.slackService = slackService;
     }
 
     @GetMapping
-    public List<Medication> getAllMedications() {
-        return medicationService.getAllMedications();
+    public List<MedicationResponse> getAllMedications() {
+        SecurityUtils.requireAdmin();
+        return medicationService.getAllMedications().stream().map(MedicationResponse::from).toList();
     }
 
     @GetMapping("/user/{userId}")
-    public List<Medication> getMedicationsByUserId(@PathVariable Long userId) {
-        return medicationService.getMedicationsByUserId(userId);
+    public List<MedicationResponse> getMedicationsByUserId(@PathVariable Long userId) {
+        SecurityUtils.requireCurrentUserOrAdmin(userId);
+        return medicationService.getMedicationsByUserId(userId).stream().map(MedicationResponse::from).toList();
+    }
+
+    @GetMapping("/me")
+    public List<MedicationResponse> getMyMedications() {
+        return medicationService.getMedicationsByUserId(SecurityUtils.getCurrentUser().getUserId())
+                .stream()
+                .map(MedicationResponse::from)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Optional<Medication> getMedicationById(@PathVariable Integer id) {
-        return medicationService.getMedicationById(id);
+    public ResponseEntity<MedicationResponse> getMedicationById(@PathVariable Integer id) {
+        Medication medication = medicationService.getAccessibleMedication(
+                id,
+                SecurityUtils.getCurrentUser().getUserId(),
+                SecurityUtils.isAdmin()
+        );
+        return ResponseEntity.ok(MedicationResponse.from(medication));
     }
 
 
     @PutMapping("/{id}")
-    public Medication updateMedication(@PathVariable Integer id, @RequestBody Medication medication) {
-        medication.setId(id);
-        return medicationService.saveMedication(medication);
+    public MedicationResponse updateMedication(@PathVariable Integer id, @Valid @RequestBody MedicationRequest request) {
+        Medication medication = medicationService.getAccessibleMedication(
+                id,
+                SecurityUtils.getCurrentUser().getUserId(),
+                SecurityUtils.isAdmin()
+        );
+        medication.setName(request.name());
+        medication.setDosage(request.dosage());
+        medication.setFrequency(request.frequency());
+        medication.setStart_date(request.startDate());
+        medication.setEnd_date(request.endDate());
+        medication.setNote(request.note());
+        return MedicationResponse.from(medicationService.saveMedication(medication));
     }
 
     @DeleteMapping("/{id}")
     public void deleteMedication(@PathVariable Integer id) {
-        medicationService.deleteMedication(id);
+        medicationService.deleteMedicationForUser(
+                id,
+                SecurityUtils.getCurrentUser().getUserId(),
+                SecurityUtils.isAdmin()
+        );
     }
 
     @PutMapping("/{id}/slack-notifications")
-    public Medication updateSlackNotifications(@PathVariable Integer id,
-                                               @RequestBody SlackNotificationRequest request) {
-        return medicationService.updateSlackNotifications(id, request.isEnabled());
+    public MedicationResponse updateSlackNotifications(@PathVariable Integer id,
+                                                       @RequestBody SlackNotificationRequest request) {
+        return MedicationResponse.from(
+                medicationService.updateSlackNotifications(
+                        SecurityUtils.getCurrentUser().getUserId(),
+                        id,
+                        request.isEnabled()
+                )
+        );
     }
 
     @PostMapping("/{id}/slack-reminder")
     public ResponseEntity<Void> sendSlackReminder(@PathVariable Integer id) {
-        medicationService.sendSlackReminder(id);
+        medicationService.sendSlackReminder(SecurityUtils.getCurrentUser().getUserId(), id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping
-    public ResponseEntity<Medication> addMedication(@RequestBody Medication med) {
-        Medication saved = medicationService.saveMedication(med);
-
-        slackService.sendSlackMessage("New medication logged: " + med.getName());
-
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    public ResponseEntity<MedicationResponse> addMedication(@Valid @RequestBody MedicationRequest request) {
+        Medication saved = medicationService.createMedication(SecurityUtils.getCurrentUser().getUserId(), request);
+        return new ResponseEntity<>(MedicationResponse.from(saved), HttpStatus.CREATED);
     }
 
 }

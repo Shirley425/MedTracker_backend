@@ -1,5 +1,6 @@
 package com.qt.MedTracker.MedicationRecord;
 
+import com.qt.MedTracker.security.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +18,28 @@ public class MedicationRecordController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<MedicationRecord> getMedicationRecordsByUserId(@PathVariable Long userId) {
-        return medicationRecordService.getMedicationRecordsByUserId(userId);
+    public List<MedicationRecordResponse> getMedicationRecordsByUserId(@PathVariable Long userId) {
+        SecurityUtils.requireCurrentUserOrAdmin(userId);
+        return medicationRecordService.getMedicationRecordsByUserId(userId)
+                .stream()
+                .map(MedicationRecordResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/me")
+    public List<MedicationRecordResponse> getMyMedicationRecords() {
+        return medicationRecordService.getMedicationRecordsByUserId(SecurityUtils.getCurrentUser().getUserId())
+                .stream()
+                .map(MedicationRecordResponse::from)
+                .toList();
     }
 
     @PostMapping
-    public ResponseEntity<MedicationRecord> createMedicationRecord(@RequestBody MedicationRecord medicationRecord) {
-        MedicationRecord savedRecord = medicationRecordService.createTakenRecord(medicationRecord);
-        return new ResponseEntity<>(savedRecord, HttpStatus.CREATED);
+    public ResponseEntity<MedicationRecordResponse> createMedicationRecord(@RequestBody MedicationRecordRequest request) {
+        MedicationRecord savedRecord = medicationRecordService.createTakenRecord(
+                SecurityUtils.getCurrentUser().getUserId(),
+                request
+        );
+        return new ResponseEntity<>(MedicationRecordResponse.from(savedRecord), HttpStatus.CREATED);
     }
 }

@@ -38,7 +38,7 @@ public class UserConfig {
                     LocalDate.of(1989, Month.APRIL, 5),
                     ADMIN_EMAIL,
                     ADMIN_PASSWORD,
-                    "CAREGIVER"
+                    "ADMIN"
             );
         };
     }

@@ -1,5 +1,6 @@
 package com.qt.MedTracker.VitalSign;
 
+import com.qt.MedTracker.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,30 +16,49 @@ public class VitalSignController {
     private VitalSignService vitalSignService;
 
     @GetMapping
-    public List<VitalSign> getAllVitalSigns() {
-        return vitalSignService.getAllVitalSigns();
+    public List<VitalSignResponse> getAllVitalSigns() {
+        SecurityUtils.requireAdmin();
+        return vitalSignService.getAllVitalSigns().stream().map(VitalSignResponse::from).toList();
     }
 
     @GetMapping("/user/{userId}")
-    public List<VitalSign> getVitalSignsByUserId(@PathVariable Long userId) {
-        return vitalSignService.getVitalSignsByUserId(userId);
+    public List<VitalSignResponse> getVitalSignsByUserId(@PathVariable Long userId) {
+        SecurityUtils.requireCurrentUserOrAdmin(userId);
+        return vitalSignService.getVitalSignsByUserId(userId).stream().map(VitalSignResponse::from).toList();
+    }
+
+    @GetMapping("/me")
+    public List<VitalSignResponse> getMyVitalSigns() {
+        return vitalSignService.getVitalSignsByUserId(SecurityUtils.getCurrentUser().getUserId())
+                .stream()
+                .map(VitalSignResponse::from)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VitalSign> getVitalSignById(@PathVariable Integer id) {
-        Optional<VitalSign> vitalSign = vitalSignService.getVitalSignById(id);
-        return vitalSign.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<VitalSignResponse> getVitalSignById(@PathVariable Integer id) {
+        VitalSign vitalSign = vitalSignService.getAccessibleVitalSign(
+                id,
+                SecurityUtils.getCurrentUser().getUserId(),
+                SecurityUtils.isAdmin()
+        );
+        return ResponseEntity.ok(VitalSignResponse.from(vitalSign));
     }
 
     @PostMapping
-    public VitalSign createVitalSign(@RequestBody VitalSign vitalSign) {
-        return vitalSignService.saveVitalSign(vitalSign);
+    public VitalSignResponse createVitalSign(@RequestBody VitalSignRequest request) {
+        return VitalSignResponse.from(
+                vitalSignService.createVitalSign(SecurityUtils.getCurrentUser().getUserId(), request)
+        );
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVitalSign(@PathVariable Integer id) {
-        vitalSignService.deleteVitalSign(id);
+        vitalSignService.deleteVitalSignForUser(
+                id,
+                SecurityUtils.getCurrentUser().getUserId(),
+                SecurityUtils.isAdmin()
+        );
         return ResponseEntity.noContent().build();
     }
 }

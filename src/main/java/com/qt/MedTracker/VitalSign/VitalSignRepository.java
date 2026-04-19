@@ -7,4 +7,5 @@ import java.util.List;
 @Repository
 public interface VitalSignRepository extends JpaRepository<VitalSign, Integer> {
     List<VitalSign> findByUserId(Long userId);
+    java.util.Optional<VitalSign> findByIdAndUserId(Integer id, Long userId);
 }
