@@ -1,44 +1,66 @@
 package com.qt.MedTracker.User;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.Period;
 
+@Entity
+@Table(name = "users")
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
+    @Transient
     private Integer age;
-    private LocalDate birth_date;
+
+//    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     private String email;
+    @JsonIgnore
+    private String password;
+    @JsonIgnore
+    private String slackWebhookUrl;
     private String role;
-//    private String caregiver_for(nullable FK to User.id);
+
+    @ManyToOne
+    @JoinColumn(name = "caregiver_for", referencedColumnName = "id", nullable = true)
+    private User caregiverFor;
+
 
     public User() {
     }
 
     public User(Long id,
                 String name,
-                Integer age,
-                LocalDate birth_date,
+                LocalDate birthDate,
                 String email,
+                String password,
                 String role) {
         this.id = id;
         this.name = name;
-        this.age = age;
-        this.birth_date = birth_date;
+        this.birthDate = birthDate;
         this.email = email;
+        this.password = password;
         this.role = role;
     }
 
     public User(String name,
-                Integer age,
-                LocalDate birth_date,
+                LocalDate birthDate,
                 String email,
+                String password,
                 String role) {
         this.name = name;
-        this.age = age;
-        this.birth_date = birth_date;
+        this.birthDate = birthDate;
         this.email = email;
+        this.password = password;
         this.role = role;
     }
+
 
     public Long getId() {
         return id;
@@ -57,19 +79,19 @@ public class User {
     }
 
     public Integer getAge() {
-        return age;
+        return Period.between(this.birthDate, LocalDate.now()).getYears();
     }
 
     public void setAge(Integer age) {
         this.age = age;
     }
 
-    public LocalDate getBirth_date() {
-        return birth_date;
+    public LocalDate getBirthDate() {
+        return birthDate;
     }
 
-    public void setBirth_date(LocalDate birth_date) {
-        this.birth_date = birth_date;
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 
     public String getEmail() {
@@ -78,6 +100,28 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getSlackWebhookUrl() {
+        return slackWebhookUrl;
+    }
+
+    public void setSlackWebhookUrl(String slackWebhookUrl) {
+        this.slackWebhookUrl = slackWebhookUrl;
+    }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("slack_connected")
+    public boolean isSlackConnected() {
+        return slackWebhookUrl != null && !slackWebhookUrl.isBlank();
     }
 
     public String getRole() {
@@ -94,7 +138,7 @@ public class User {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", age=" + age +
-                ", birth_date=" + birth_date +
+                ", birthDate=" + birthDate +
                 ", email='" + email + '\'' +
                 ", role='" + role + '\'' +
                 '}';
