@@ -18,8 +18,10 @@ import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,6 +70,19 @@ class AuthControllerWebMvcTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Validation Failed"))
                 .andExpect(jsonPath("$.details").isArray());
+    }
+
+    @Test
+    void loginWithInvalidCredentialsReturnsUnauthorized() throws Exception {
+        doThrow(new IllegalArgumentException("Invalid email or password"))
+                .when(userService)
+                .authenticate(eq("joe@example.com"), eq("wrong-password"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequestBuilder("joe@example.com", "wrong-password"))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string(""));
     }
 
     private record LoginRequestBuilder(String email, String password) {

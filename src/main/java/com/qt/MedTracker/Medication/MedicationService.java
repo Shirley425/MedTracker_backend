@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class MedicationService {
@@ -31,10 +30,6 @@ public class MedicationService {
 
     public List<Medication> getMedicationsByUserId(Long userId) {
         return medicationRepository.findByUserId(userId);
-    }
-
-    public Optional<Medication> getMedicationById(Integer id) {
-        return medicationRepository.findById(id);
     }
 
     public Medication getMedicationOrThrow(Integer id) {
@@ -88,10 +83,6 @@ public class MedicationService {
         }
 
         notificationService.sendMedicationReminder(user, medication);
-    }
-
-    public void deleteMedication(Integer id) {
-        medicationRepository.deleteById(id);
     }
 
     public void deleteMedicationForUser(Integer id, Long currentUserId, boolean isAdmin) {
